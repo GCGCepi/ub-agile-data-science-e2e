@@ -10,7 +10,7 @@ the Markdown files in this repository. The generated code goes to **`output/src/
 | `SPECS.md` | **What** must the system do? (user stories + acceptance criteria) | Product owner / humans |
 | `DESIGN.md` | **How should it feel** to use? (UX decisions) | Humans |
 | `ARCHITECTURE.md` | **With what** and **how** is it built? (tech decisions, layout) | Humans |
-| `TASKS.md` | **In which order** is it built, and what is done? | The agent (status + notes only) |
+| `TASKS.md` | **In which order** is it built? (read-only template) | Humans |
 | `AGENT.md` | **How** does the agent work? (this file) | Humans |
 
 Priority if two documents disagree: `SPECS.md` > `ARCHITECTURE.md` > `DESIGN.md` >
@@ -21,7 +21,8 @@ Priority if two documents disagree: `SPECS.md` > `ARCHITECTURE.md` > `DESIGN.md`
 1. Write code **only** inside `output/src/`. Never edit the root `src/` folder, the
    `README.md`, or the spec documents (`SPECS.md`, `DESIGN.md`, `ARCHITECTURE.md`,
    `AGENT.md`).
-2. In `TASKS.md` you may only change the status boxes and append to "Notes / log".
+2. Never edit `TASKS.md` or `SPECS.md`. The status of a run is written to two
+   timestamped copies created at the start of the run (see "Run status files").
 3. Each task may only touch the files listed in its **Files** field.
 4. Implement what the documents say, nothing more: no extra endpoints, features,
    dependencies, files, config or tests that are not asked for.
@@ -31,6 +32,22 @@ Priority if two documents disagree: `SPECS.md` > `ARCHITECTURE.md` > `DESIGN.md`
    where they explain *why*.
 7. Do not write generated artefacts (`model/`, `__pycache__/`, virtualenvs) into
    `output/src/`. Delete them after verifying.
+
+## Run status files
+
+At the start of every run, take one timestamp `<TS>` (format `YYYYMMDD-HHMMSS`, e.g.
+`20261028-130214`) and create, in the repository root:
+
+- `TASKS_<TS>.md`: a copy of `TASKS.md`. The agent changes the status boxes and
+  appends to "Notes / log" here, never in `TASKS.md`.
+- `SPECS_<TS>.md`: a copy of `SPECS.md` where every acceptance criterion
+  (`- **AC-xx.y** ...`) becomes `- [ ] **AC-xx.y** ...`, plus this legend line before
+  the first user story: `Status of the run: [x] implemented and verified by running it
+  · [~] implemented, verified only by reading the code (not run: UI, docker, or no
+  test for it) · [!] not met (see log).`
+
+Both files must be non-empty at the end of the run. Wherever the steps below say
+"`TASKS.md`", they mean `TASKS_<TS>.md`; the file `SPECS_<TS>.md` is updated in step 6.
 
 ## The loop
 
@@ -54,7 +71,9 @@ Priority if two documents disagree: `SPECS.md` > `ARCHITECTURE.md` > `DESIGN.md`
 
 Read all five Markdown files completely, in this order: `AGENT.md`, `SPECS.md`,
 `ARCHITECTURE.md`, `DESIGN.md`, `TASKS.md`. Then look at what already exists in
-`output/src/` (the loop can resume a previous run).
+`output/src/` (the loop can resume a previous run: if it continues one, reuse the latest
+`TASKS_<TS>.md` / `SPECS_<TS>.md` instead of creating new copies). Then create the two
+run status files.
 
 ### 2. Pick the next task
 
@@ -98,11 +117,14 @@ task `[!]`, log the error, and continue with the next task that does not depend 
 Clean up after verifying: remove `__pycache__/`, `model/` and any temporary file
 from `output/src/`.
 
-### 6. Update `TASKS.md`
+### 6. Update the run status files
 
-- Mark the task `[x]` (or `[!]`).
+- In `TASKS_<TS>.md`, mark the task `[x]` (or `[!]`).
 - Append one line to "Notes / log":
   `T-xx — done — <what was done> — <how it was verified>`
+- In `SPECS_<TS>.md`, mark each acceptance criterion covered by the task: `[x]` if it
+  was verified by running something, `[~]` if only by reading the code, `[!]` if not
+  met. In the final review task (T-12) make sure no criterion is left as `[ ]`.
 
 ### 7. Stop?
 
@@ -115,7 +137,7 @@ Go back to step 2 unless:
 
 Finish with a short summary:
 
-- tasks done / blocked,
+- tasks done / blocked, and the names of the two run status files,
 - the file tree of `output/src/`,
 - checks that were **not** run and why,
 - open questions from the log,
@@ -128,4 +150,5 @@ Give the agent this prompt from the repository root:
 > Follow `AGENT.md`. Build the application described in `SPECS.md`, `DESIGN.md` and
 > `ARCHITECTURE.md` by working through `TASKS.md`. Write the code in `output/src/`.
 
-To start from scratch: delete `output/` and reset every task in `TASKS.md` to `[ ]`.
+To start from scratch: delete `output/`. Old `TASKS_<TS>.md` / `SPECS_<TS>.md` files
+can be kept as history; each new run creates its own pair.
